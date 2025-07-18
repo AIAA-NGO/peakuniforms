@@ -6,14 +6,14 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL}/reports/financial`;
 // Create axios instance with default configuration
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000, // 10 seconds timeout
+  timeout: 10000, 
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   }
 });
 
-// Request interceptor for adding auth token
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
