@@ -49,7 +49,7 @@ public class Discount {
 
     private Set<Product> applicableProducts = new HashSet<>();
 
-    // Helper method to convert to DTO
+    
     public DiscountResponse toResponse() {
         DiscountResponse response = new DiscountResponse();
         response.setId(this.id);
