@@ -16,6 +16,9 @@ public class Sale {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "applied_discount_code")
+    private String appliedDiscountCode;
+
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
@@ -72,5 +75,14 @@ public class Sale {
 
     public BigDecimal getTotalAmount() {
         return this.total;
+    }
+
+
+    public String getAppliedDiscountCode() {
+        return appliedDiscountCode;
+    }
+
+    public void setAppliedDiscountCode(String appliedDiscountCode) {
+        this.appliedDiscountCode = appliedDiscountCode;
     }
 }

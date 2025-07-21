@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.sql.Timestamp;  // Correct import
 
 @Service
 @RequiredArgsConstructor
@@ -39,20 +39,17 @@ public class SaleServiceImpl implements SaleService {
         sale.setCustomer(customer);
         sale.setSaleDate(LocalDateTime.now());
         sale.setStatus(Sale.SaleStatus.COMPLETED);
+        sale.setAppliedDiscountCode(request.getAppliedDiscountCode());
 
         List<SaleItem> saleItems = processSaleItems(request.getItems(), sale);
         sale.setItems(saleItems);
 
-        // Calculate subtotal (sum of all item prices without discount)
         BigDecimal subtotal = calculateSubtotal(saleItems);
+        BigDecimal discountAmount = request.getDiscountAmount() != null ?
+                request.getDiscountAmount() :
+                calculateAutomaticDiscounts(saleItems);
 
-        // Calculate total discount
-        BigDecimal discountAmount = calculateAutomaticDiscounts(saleItems);
-
-        // Calculate total (subtotal - discount)
         BigDecimal total = subtotal.subtract(discountAmount);
-
-        // Calculate profit (sum of (selling price - cost price) for each item)
         BigDecimal profit = calculateSaleProfit(saleItems);
 
         sale.setSubtotal(subtotal);
@@ -352,12 +349,10 @@ public class SaleServiceImpl implements SaleService {
             SaleItem saleItem = new SaleItem();
             saleItem.setProduct(product);
             saleItem.setQuantity(itemRequest.getQuantity());
-            BigDecimal unitPrice = BigDecimal.valueOf(product.getPrice());
-            saleItem.setUnitPrice(unitPrice);
-            BigDecimal quantity = BigDecimal.valueOf(itemRequest.getQuantity());
-            saleItem.setTotalPrice(unitPrice.multiply(quantity));
-
-            saleItem.setDiscountAmount(BigDecimal.ZERO);
+            saleItem.setUnitPrice(itemRequest.getUnitPrice());
+            saleItem.setTotalPrice(itemRequest.getUnitPrice()
+                    .multiply(BigDecimal.valueOf(itemRequest.getQuantity())));
+            saleItem.setDiscountAmount(itemRequest.getDiscountAmount());
             saleItem.setSale(sale);
 
             return saleItem;

@@ -95,6 +95,7 @@ public class CartController {
         saleRequest.setSubtotal(cart.getSubtotal());
         saleRequest.setDiscountAmount(cart.getDiscountAmount());
         saleRequest.setTotal(cart.getTotal());
+//        saleRequest.setAppliedDiscountCode(cart.getAppliedDiscountCode());
 
         SaleResponse response = saleService.createSale(saleRequest);
         cartService.clearCart(username);

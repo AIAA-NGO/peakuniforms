@@ -233,19 +233,26 @@ public class CartServiceImpl implements CartService {
     }
 
     private BigDecimal calculateDiscount(UserCart userCart, List<CartItemResponse> items) {
+        // Calculate product-level discounts
         BigDecimal productDiscounts = items.stream()
                 .map(CartItemResponse::getDiscountAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-        if (userCart.appliedDiscountCode == null) return productDiscounts;
+        // Apply cart-level discount if exists
+        if (userCart.appliedDiscountCode != null) {
+            Discount discount = discountRepository.findByCode(userCart.appliedDiscountCode)
+                    .orElseThrow(() -> new ResourceNotFoundException("Discount not found"));
 
-        Discount discount = discountRepository.findByCode(userCart.appliedDiscountCode)
-                .orElseThrow(() -> new ResourceNotFoundException("Discount not found"));
+            // Calculate discount on pre-tax amount
+            BigDecimal discountAmount = items.stream()
+                    .map(item -> item.getUnitPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
+                    .reduce(BigDecimal.ZERO, BigDecimal::add)
+                    .multiply(BigDecimal.valueOf(discount.getPercentage() / 100));
 
-        BigDecimal subtotal = calculateSubtotal(items);
-        BigDecimal codeDiscount = subtotal.multiply(BigDecimal.valueOf(discount.getPercentage() / 100));
+            return productDiscounts.add(discountAmount);
+        }
 
-        return productDiscounts.add(codeDiscount);
+        return productDiscounts;
     }
 
     private BigDecimal calculateTax(BigDecimal taxableAmount) {

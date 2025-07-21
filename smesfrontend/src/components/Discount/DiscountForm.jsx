@@ -5,7 +5,7 @@ import { getAllProducts } from '../../services/productServices';
 const DiscountForm = () => {
   const [discount, setDiscount] = useState({
     code: '',
-    percentage: 10.0,
+    percentage: '',
     validFrom: '',
     validTo: '',
     description: '',

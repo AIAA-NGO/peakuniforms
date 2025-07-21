@@ -19,7 +19,8 @@ export const CartProvider = ({ children }) => {
     subtotal: 0,
     discount: 0,
     tax: 0,
-    total: 0
+    total: 0,
+    appliedDiscountCode: null
   });
 
   const saveCartToStorage = (cart) => {
@@ -29,34 +30,40 @@ export const CartProvider = ({ children }) => {
     }
   };
 
-  
-const calculateCartTotals = (items) => {
-  // Calculate tax-inclusive subtotal (sum of all item prices)
-  const taxInclusiveSubtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const calculateCartTotals = (items, appliedDiscount = null) => {
+    // Calculate tax-inclusive subtotal (sum of all item prices)
+    const taxInclusiveSubtotal = items.reduce((sum, item) => 
+      sum + (item.price * item.quantity), 0);
 
-  // Calculate total tax (16% of each item's price)
-  const tax = items.reduce((sum, item) => sum + (item.price * 0.16 * item.quantity), 0);
+    // Calculate total tax (16% of each item's price)
+    const tax = items.reduce((sum, item) => 
+      sum + (item.price * 0.16 * item.quantity), 0);
 
-  // Calculate tax-exclusive subtotal (price without tax)
-  const taxExclusiveSubtotal = taxInclusiveSubtotal - tax;
+    // Calculate tax-exclusive subtotal (price without tax)
+    const taxExclusiveSubtotal = taxInclusiveSubtotal - tax;
 
-  // Calculate discount
-  const discount = items.reduce((sum, item) => sum + ((item.discountAmount || 0) * item.quantity), 0);
+    // Calculate product-level discounts
+    const productDiscounts = items.reduce((sum, item) => 
+      sum + ((item.discountAmount || 0) * item.quantity), 0);
 
-  // Apply discount to tax-exclusive subtotal
-  const taxableAmount = taxExclusiveSubtotal - discount;
+    // Apply cart-level discount if exists
+    let cartDiscount = 0;
+    if (appliedDiscount) {
+      cartDiscount = taxExclusiveSubtotal * (appliedDiscount.percentage / 100);
+    }
 
-  // Recalculate tax after discount (optional, if discount affects tax)
-  // const tax = taxableAmount * 0.16;
+    const totalDiscount = productDiscounts + cartDiscount;
+    const taxableAmount = taxExclusiveSubtotal - totalDiscount;
 
-  return {
-    preTaxAmount: parseFloat(taxableAmount.toFixed(2)), // 168.00
-    subtotal: parseFloat(taxableAmount.toFixed(2)),     // 168.00 (tax-exclusive)
-    discount: parseFloat(discount.toFixed(2)),          // 0.00
-    tax: parseFloat(tax.toFixed(2)),                   // 32.00 (16% of 200)
-    total: parseFloat(taxInclusiveSubtotal.toFixed(2))  // 200.00
+    return {
+      preTaxAmount: parseFloat(taxableAmount.toFixed(2)),
+      subtotal: parseFloat(taxInclusiveSubtotal.toFixed(2)),
+      discount: parseFloat(totalDiscount.toFixed(2)),
+      tax: parseFloat(tax.toFixed(2)),
+      total: parseFloat((taxableAmount + tax).toFixed(2)),
+      appliedDiscountCode: appliedDiscount?.code || null
+    };
   };
-};
 
   const [cart, setCart] = useState(getEmptyCart());
 
@@ -68,7 +75,7 @@ const calculateCartTotals = (items) => {
   const updateCart = (newCart) => {
     const cartWithTotals = {
       ...newCart,
-      ...calculateCartTotals(newCart.items)
+      ...calculateCartTotals(newCart.items, newCart.appliedDiscount)
     };
     setCart(cartWithTotals);
     saveCartToStorage(cartWithTotals);
@@ -80,9 +87,7 @@ const calculateCartTotals = (items) => {
 
     if (productStock < 1) return;
 
-    const discountAmount = product.discountPercentage 
-      ? (product.price * product.discountPercentage / 100)
-      : 0;
+    const discountAmount = product.discountAmount || 0;
 
     let updatedItems;
     if (existingItem) {
@@ -94,7 +99,6 @@ const calculateCartTotals = (items) => {
           ? { 
               ...item, 
               quantity: item.quantity + quantity,
-              discountPercentage: product.discountPercentage,
               discountAmount
             }
           : item
@@ -107,7 +111,6 @@ const calculateCartTotals = (items) => {
           name: product.name,
           price: product.price,
           quantity: quantity,
-          discountPercentage: product.discountPercentage,
           discountAmount,
           imageUrl: product.hasImage ? `/api/products/${product.id}/image` : null,
           stock: product.quantity_in_stock,
@@ -118,13 +121,32 @@ const calculateCartTotals = (items) => {
     }
 
     updateCart({
+      ...cart,
       items: updatedItems
+    });
+  };
+
+  const applyDiscount = (discount) => {
+    updateCart({
+      ...cart,
+      appliedDiscount: {
+        code: discount.code,
+        percentage: discount.percentage
+      }
+    });
+  };
+
+  const removeDiscount = () => {
+    updateCart({
+      ...cart,
+      appliedDiscount: null
     });
   };
 
   const removeFromCart = (id) => {
     const updatedItems = cart.items.filter(item => item.id !== id);
     updateCart({
+      ...cart,
       items: updatedItems
     });
   };
@@ -143,6 +165,7 @@ const calculateCartTotals = (items) => {
     });
     
     updateCart({
+      ...cart,
       items: updatedItems
     });
   };
@@ -159,7 +182,9 @@ const calculateCartTotals = (items) => {
       addToCart, 
       removeFromCart, 
       updateQuantity, 
-      clearCart 
+      clearCart,
+      applyDiscount,
+      removeDiscount
     }}>
       {children}
     </CartContext.Provider>

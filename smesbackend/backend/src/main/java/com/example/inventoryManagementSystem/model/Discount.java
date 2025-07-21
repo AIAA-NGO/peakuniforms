@@ -46,6 +46,7 @@ public class Discount {
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     @JsonIgnoreProperties("discounts") // Assuming Product has a discounts collection
+
     private Set<Product> applicableProducts = new HashSet<>();
 
     // Helper method to convert to DTO

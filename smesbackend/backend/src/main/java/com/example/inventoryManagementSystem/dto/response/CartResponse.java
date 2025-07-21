@@ -13,6 +13,7 @@ public class CartResponse {
     private List<CartItemResponse> items;
     private BigDecimal subtotal;      // tax-exclusive amount
     private BigDecimal discountAmount;
+    private String appliedDiscountCode;  // Add this field
     private BigDecimal taxAmount;
     private BigDecimal total;        // tax-inclusive amount
     private BigDecimal preTaxAmount; // same as subtotal (for internal use)

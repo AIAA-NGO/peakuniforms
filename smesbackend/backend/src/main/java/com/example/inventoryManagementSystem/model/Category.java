@@ -1,5 +1,6 @@
 package com.example.inventoryManagementSystem.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
@@ -23,6 +24,7 @@ public class Category {
     private String description;
 
     @OneToMany(mappedBy = "category", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties("category")
     private List<Product> products = new ArrayList<>();
 
     @ManyToMany(mappedBy = "suppliedCategories")
