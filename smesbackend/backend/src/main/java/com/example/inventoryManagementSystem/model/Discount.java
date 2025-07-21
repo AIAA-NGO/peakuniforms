@@ -45,11 +45,11 @@ public class Discount {
             joinColumns = @JoinColumn(name = "discount_id"),
             inverseJoinColumns = @JoinColumn(name = "product_id")
     )
-    @JsonIgnoreProperties("discounts") // Assuming Product has a discounts collection
+    @JsonIgnoreProperties("discounts") // discounts collection
 
     private Set<Product> applicableProducts = new HashSet<>();
 
-    
+
     public DiscountResponse toResponse() {
         DiscountResponse response = new DiscountResponse();
         response.setId(this.id);
