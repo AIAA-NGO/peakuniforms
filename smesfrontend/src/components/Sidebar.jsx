@@ -6,7 +6,7 @@ import {
   Home, Boxes, Users, ShoppingCart, FileBarChart2, 
   ChevronDown, ClipboardList, DollarSign, FileText,
   Settings, CreditCard, ChevronLeft, ChevronRight,
-  Landmark
+  Landmark, ChevronUp
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -15,13 +15,8 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
   const { hasPermission, user } = useAuth();
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  // Dropdown states
-  const [productsOpen, setProductsOpen] = useState(false);
-  const [reportsOpen, setReportsOpen] = useState(false);
-  const [salesOpen, setSalesOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [purchasesOpen, setPurchasesOpen] = useState(false);
-  const [financeOpen, setFinanceOpen] = useState(false);
+  // Track which dropdown is open (null means none)
+  const [openDropdown, setOpenDropdown] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
@@ -31,14 +26,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
 
   const isActive = (path) => location.pathname.startsWith(path);
 
+  // Close all dropdowns when sidebar is minimized or mobile menu is closed
   useEffect(() => {
     if (isMinimized || !isMobileOpen) {
-      setProductsOpen(false);
-      setReportsOpen(false);
-      setSalesOpen(false);
-      setSettingsOpen(false);
-      setPurchasesOpen(false);
-      setFinanceOpen(false);
+      setOpenDropdown(null);
     }
   }, [isMinimized, isMobileOpen]);
 
@@ -62,6 +53,11 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
         {item.label}
       </Link>
     );
+  };
+
+  // Toggle dropdown
+  const toggleDropdown = (dropdownName) => {
+    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
   };
 
   return (
@@ -123,7 +119,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('product_view') && (
             <div className="relative">
               <button
-                onClick={() => setProductsOpen(!productsOpen)}
+                onClick={() => toggleDropdown('products')}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/products') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -134,13 +130,14 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   {(!isMinimized || isMobile) && <span className="font-medium">Manage Product</span>}
                 </div>
                 {(!isMinimized || isMobile) && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform ${productsOpen ? 'rotate-180' : ''} text-gray-400`}
-                  />
+                  openDropdown === 'products' ? (
+                    <ChevronDown size={16} className="text-gray-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-400" />
+                  )
                 )}
               </button>
-              {(productsOpen && (!isMinimized || isMobile)) && (
+              {(openDropdown === 'products' && (!isMinimized || isMobile)) && (
                 <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
                   {[
                     { path: '/products', label: 'Product List', requiredPermission: 'product_view' },
@@ -151,7 +148,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <Boxes size={14} />,
-                    onClick: () => setProductsOpen(false)
+                    onClick: () => setOpenDropdown(null)
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -177,7 +174,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('purchase_view') && (
             <div className="relative">
               <button
-                onClick={() => setPurchasesOpen(!purchasesOpen)}
+                onClick={() => toggleDropdown('purchases')}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/purchases') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -188,13 +185,14 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   {(!isMinimized || isMobile) && <span className="font-medium">Purchases</span>}
                 </div>
                 {(!isMinimized || isMobile) && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform ${purchasesOpen ? 'rotate-180' : ''} text-gray-400`}
-                  />
+                  openDropdown === 'purchases' ? (
+                    <ChevronDown size={16} className="text-gray-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-400" />
+                  )
                 )}
               </button>
-              {(purchasesOpen && (!isMinimized || isMobile)) && (
+              {(openDropdown === 'purchases' && (!isMinimized || isMobile)) && (
                 <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
                   {[
                     { path: '/purchases/create', label: 'Create Purchase', requiredPermission: 'purchase_create' },
@@ -203,7 +201,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <ShoppingCart size={14} />,
-                    onClick: () => setPurchasesOpen(false)
+                    onClick: () => setOpenDropdown(null)
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -274,7 +272,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('finance_view') && (
             <div className="relative">
               <button
-                onClick={() => setFinanceOpen(!financeOpen)}
+                onClick={() => toggleDropdown('finance')}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/reports/income-statement') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -285,13 +283,14 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   {(!isMinimized || isMobile) && <span className="font-medium">Finance</span>}
                 </div>
                 {(!isMinimized || isMobile) && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform ${financeOpen ? 'rotate-180' : ''} text-gray-400`}
-                  />
+                  openDropdown === 'finance' ? (
+                    <ChevronDown size={16} className="text-gray-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-400" />
+                  )
                 )}
               </button>
-              {(financeOpen && (!isMinimized || isMobile)) && (
+              {(openDropdown === 'finance' && (!isMinimized || isMobile)) && (
                 <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
                   {[
                     { path: '/reports/income-statement', label: 'Income Statement' }
@@ -299,7 +298,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                     ...item,
                     icon: <FileText size={14} />,
                     requiredPermission: 'finance_view',
-                    onClick: () => setFinanceOpen(false)
+                    onClick: () => setOpenDropdown(null)
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -325,7 +324,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('sale_view') && (
             <div className="relative">
               <button
-                onClick={() => setSalesOpen(!salesOpen)}
+                onClick={() => toggleDropdown('sales')}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/sales') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -336,13 +335,14 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   {(!isMinimized || isMobile) && <span className="font-medium">Sales</span>}
                 </div>
                 {(!isMinimized || isMobile) && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform ${salesOpen ? 'rotate-180' : ''} text-gray-400`}
-                  />
+                  openDropdown === 'sales' ? (
+                    <ChevronDown size={16} className="text-gray-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-400" />
+                  )
                 )}
               </button>
-              {(salesOpen && (!isMinimized || isMobile)) && (
+              {(openDropdown === 'sales' && (!isMinimized || isMobile)) && (
                 <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
                   {[
                     { path: '/sales', label: 'Sales List', requiredPermission: 'sale_view' },
@@ -350,7 +350,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <ClipboardList size={14} />,
-                    onClick: () => setSalesOpen(false)
+                    onClick: () => setOpenDropdown(null)
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -364,7 +364,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
             hasPermission('suppliersreports_view')) && (
             <div className="relative">
               <button
-                onClick={() => setReportsOpen(!reportsOpen)}
+                onClick={() => toggleDropdown('reports')}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/reports') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -375,13 +375,14 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   {(!isMinimized || isMobile) && <span className="font-medium">Reports</span>}
                 </div>
                 {(!isMinimized || isMobile) && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform ${reportsOpen ? 'rotate-180' : ''} text-gray-400`}
-                  />
+                  openDropdown === 'reports' ? (
+                    <ChevronDown size={16} className="text-gray-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-400" />
+                  )
                 )}
               </button>
-              {(reportsOpen && (!isMinimized || isMobile)) && (
+              {(openDropdown === 'reports' && (!isMinimized || isMobile)) && (
                 <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
                   {[
                     { path: '/reports/sales', label: 'Sales Report', requiredPermission: 'salesreports_view' },
@@ -391,7 +392,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <FileBarChart2 size={14} />,
-                    onClick: () => setReportsOpen(false)
+                    onClick: () => setOpenDropdown(null)
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -402,7 +403,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('settings_manage') && (
             <div className="relative">
               <button
-                onClick={() => setSettingsOpen(!settingsOpen)}
+                onClick={() => toggleDropdown('settings')}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/settings/business') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -413,13 +414,14 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   {(!isMinimized || isMobile) && <span className="font-medium">Settings</span>}
                 </div>
                 {(!isMinimized || isMobile) && (
-                  <ChevronDown 
-                    size={16} 
-                    className={`transition-transform ${settingsOpen ? 'rotate-180' : ''} text-gray-400`}
-                  />
+                  openDropdown === 'settings' ? (
+                    <ChevronDown size={16} className="text-gray-400" />
+                  ) : (
+                    <ChevronRight size={16} className="text-gray-400" />
+                  )
                 )}
               </button>
-              {(settingsOpen && (!isMinimized || isMobile)) && (
+              {(openDropdown === 'settings' && (!isMinimized || isMobile)) && (
                 <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
                   {[
                     { path: '/settings/business/profile', label: 'Business Profile' },
@@ -429,7 +431,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                     ...item,
                     icon: <Settings size={14} />,
                     requiredPermission: item.requiredPermission || 'settings_manage',
-                    onClick: () => setSettingsOpen(false)
+                    onClick: () => setOpenDropdown(null)
                   })).map(renderMenuItem)}
                 </div>
               )}
