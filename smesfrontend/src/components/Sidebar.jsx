@@ -42,7 +42,8 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
       <Link 
         key={item.path}
         to={item.path} 
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent event bubbling to parent
           onLinkClick();
           item.onClick?.();
         }}
@@ -57,8 +58,29 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
 
   // Toggle dropdown
   const toggleDropdown = (dropdownName) => {
-    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+    if (openDropdown === dropdownName) {
+      setOpenDropdown(null); // Close if clicking the same dropdown
+    } else {
+      setOpenDropdown(dropdownName); // Open the clicked dropdown
+    }
   };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      if (openDropdown) {
+        setOpenDropdown(null);
+      }
+    };
+
+    if (openDropdown) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   return (
     <>
@@ -119,7 +141,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('product_view') && (
             <div className="relative">
               <button
-                onClick={() => toggleDropdown('products')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown('products');
+                }}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/products') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -138,7 +163,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                 )}
               </button>
               {(openDropdown === 'products' && (!isMinimized || isMobile)) && (
-                <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
+                <div 
+                  className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700"
+                  onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing
+                >
                   {[
                     { path: '/products', label: 'Product List', requiredPermission: 'product_view' },
                     { path: '/products/create', label: 'Create Product', requiredPermission: 'product_create' },
@@ -148,7 +176,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <Boxes size={14} />,
-                    onClick: () => setOpenDropdown(null)
+                    onClick: () => {} // Remove the onClick that closes the dropdown
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -174,7 +202,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('purchase_view') && (
             <div className="relative">
               <button
-                onClick={() => toggleDropdown('purchases')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown('purchases');
+                }}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/purchases') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -193,7 +224,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                 )}
               </button>
               {(openDropdown === 'purchases' && (!isMinimized || isMobile)) && (
-                <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
+                <div 
+                  className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {[
                     { path: '/purchases/create', label: 'Create Purchase', requiredPermission: 'purchase_create' },
                     { path: '/purchases', label: 'Purchase List', requiredPermission: 'purchase_view' },
@@ -201,7 +235,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <ShoppingCart size={14} />,
-                    onClick: () => setOpenDropdown(null)
+                    onClick: () => {} // Remove the onClick that closes the dropdown
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -272,7 +306,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('finance_view') && (
             <div className="relative">
               <button
-                onClick={() => toggleDropdown('finance')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown('finance');
+                }}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/reports/income-statement') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -291,14 +328,17 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                 )}
               </button>
               {(openDropdown === 'finance' && (!isMinimized || isMobile)) && (
-                <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
+                <div 
+                  className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {[
                     { path: '/reports/income-statement', label: 'Income Statement' }
                   ].map(item => ({
                     ...item,
                     icon: <FileText size={14} />,
                     requiredPermission: 'finance_view',
-                    onClick: () => setOpenDropdown(null)
+                    onClick: () => {} // Remove the onClick that closes the dropdown
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -324,7 +364,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('sale_view') && (
             <div className="relative">
               <button
-                onClick={() => toggleDropdown('sales')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown('sales');
+                }}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/sales') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -343,14 +386,17 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                 )}
               </button>
               {(openDropdown === 'sales' && (!isMinimized || isMobile)) && (
-                <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
+                <div 
+                  className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {[
                     { path: '/sales', label: 'Sales List', requiredPermission: 'sale_view' },
                     { path: '/sales/returns', label: 'Sales Returns', requiredPermission: 'sale_return' }
                   ].map(item => ({
                     ...item,
                     icon: <ClipboardList size={14} />,
-                    onClick: () => setOpenDropdown(null)
+                    onClick: () => {} // Remove the onClick that closes the dropdown
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -364,7 +410,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
             hasPermission('suppliersreports_view')) && (
             <div className="relative">
               <button
-                onClick={() => toggleDropdown('reports')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown('reports');
+                }}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/reports') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -383,7 +432,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                 )}
               </button>
               {(openDropdown === 'reports' && (!isMinimized || isMobile)) && (
-                <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
+                <div 
+                  className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {[
                     { path: '/reports/sales', label: 'Sales Report', requiredPermission: 'salesreports_view' },
                     { path: '/reports/products', label: 'Product Performance', requiredPermission: 'productsreports_view' },
@@ -392,7 +444,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                   ].map(item => ({
                     ...item,
                     icon: <FileBarChart2 size={14} />,
-                    onClick: () => setOpenDropdown(null)
+                    onClick: () => {} // Remove the onClick that closes the dropdown
                   })).map(renderMenuItem)}
                 </div>
               )}
@@ -403,7 +455,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
           {hasPermission('settings_manage') && (
             <div className="relative">
               <button
-                onClick={() => toggleDropdown('settings')}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleDropdown('settings');
+                }}
                 className={`flex items-center justify-between w-full px-4 py-4 rounded-lg transition-all
                   ${isActive('/settings/business') ? 'bg-blue-900/30 text-white border-l-4 border-blue-500' : 'hover:bg-gray-700/50'}
                   ${isMinimized && !isMobile ? 'justify-center px-2' : ''}`}
@@ -422,7 +477,10 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                 )}
               </button>
               {(openDropdown === 'settings' && (!isMinimized || isMobile)) && (
-                <div className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700">
+                <div 
+                  className="ml-10 mt-2 flex flex-col gap-1 pl-2 border-l border-gray-700"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   {[
                     { path: '/settings/business/profile', label: 'Business Profile' },
                     { path: '/settings/business/roles', label: 'Roles', requiredPermission: 'role_manage' },
@@ -431,7 +489,7 @@ export default function Sidebar({ isMobileOpen, isMinimized, onLinkClick, onTogg
                     ...item,
                     icon: <Settings size={14} />,
                     requiredPermission: item.requiredPermission || 'settings_manage',
-                    onClick: () => setOpenDropdown(null)
+                    onClick: () => {} // Remove the onClick that closes the dropdown
                   })).map(renderMenuItem)}
                 </div>
               )}
