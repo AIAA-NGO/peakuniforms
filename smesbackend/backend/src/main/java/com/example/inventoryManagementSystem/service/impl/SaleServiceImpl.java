@@ -343,15 +343,17 @@ public class SaleServiceImpl implements SaleService {
                 throw new BusinessException("Insufficient stock for product: " + product.getName());
             }
 
-            // Get unit price - use product price if not provided in request
+            // Get unit price - use product's price (selling price) if not provided in request
             BigDecimal unitPrice = itemRequest.getUnitPrice();
             if (unitPrice == null) {
-                unitPrice = BigDecimal.valueOf(product.getSellingPrice());
+                unitPrice = BigDecimal.valueOf(product.getPrice()); // Using getPrice() instead of getSellingPrice()
             }
 
+            // Update product stock
             product.setQuantityInStock(product.getQuantityInStock() - itemRequest.getQuantity());
             productRepository.save(product);
 
+            // Create sale item
             SaleItem saleItem = new SaleItem();
             saleItem.setProduct(product);
             saleItem.setQuantity(itemRequest.getQuantity());
