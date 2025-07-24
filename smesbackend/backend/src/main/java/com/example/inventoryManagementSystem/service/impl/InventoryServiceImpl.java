@@ -8,6 +8,8 @@ import com.example.inventoryManagementSystem.model.*;
 import com.example.inventoryManagementSystem.repository.*;
 import com.example.inventoryManagementSystem.service.InventoryService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -28,30 +30,13 @@ public class InventoryServiceImpl implements InventoryService {
     private final PurchaseItemRepository purchaseItemRepository;
     private final SupplierRepository supplierRepository;
 
-
     @Override
-    public List<InventoryStatusResponse> getInventoryStatus(
+    public Page<InventoryStatusResponse> getInventoryStatus(
             String search, Long categoryId, Long brandId,
-            Boolean lowStockOnly, Boolean expiredOnly) {
+            Boolean lowStockOnly, Boolean expiredOnly, Pageable pageable) {
 
-        List<Product> products;
-
-        if (Boolean.TRUE.equals(lowStockOnly)) {
-            products = productRepository.findByQuantityInStockLessThanEqual(
-                    productRepository.findAll().stream()
-                            .map(Product::getLowStockThreshold)
-                            .min(Integer::compare)
-                            .orElse(0)
-            );
-        } else if (Boolean.TRUE.equals(expiredOnly)) {
-            products = productRepository.findByExpiryDateBefore(LocalDate.now());
-        } else {
-            products = productRepository.findAll();
-        }
-
-        return products.stream()
-                .map(this::convertToInventoryStatusResponse)
-                .collect(Collectors.toList());
+        return productRepository.findAll(pageable)
+                .map(this::convertToInventoryStatusResponse);
     }
 
     @Override
