@@ -15,6 +15,11 @@ const InventoryValuationReport = () => {
     lowStockItems: 0,
     outOfStockItems: 0
   });
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pageSize: 10,
+    total: 0
+  });
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-KE', {
@@ -134,22 +139,22 @@ const InventoryValuationReport = () => {
     return 'HIGH';
   };
 
-  const fetchInventoryReport = async () => {
+  const fetchInventoryReport = async (page = 0, size = 10) => {
     setLoading(true);
     try {
       const [categoriesData, productsResponse] = await Promise.all([
         fetchCategories(),
-        getAllProducts()
+        getAllProducts(page, size)
       ]);
 
-      // Extract products array from response
-      const products = Array.isArray(productsResponse?.content) 
-        ? productsResponse.content 
-        : Array.isArray(productsResponse)
-          ? productsResponse
-          : [];
+      // Update pagination total
+      setPagination(prev => ({
+        ...prev,
+        total: productsResponse?.totalElements || 0
+      }));
 
-      console.log('Products data:', products); // Debug log
+      // Extract products array from response
+      const products = productsResponse?.content || [];
 
       const processedData = products.map(product => {
         const totalValue = (product.costPrice || 0) * (product.quantityInStock || 0);
@@ -172,8 +177,6 @@ const InventoryValuationReport = () => {
         };
       });
 
-      console.log('Processed data:', processedData); // Debug log
-
       setData(processedData);
       calculateSummary(processedData);
       updateCategoryFilters(processedData);
@@ -192,6 +195,12 @@ const InventoryValuationReport = () => {
     }
   };
 
+  const handleTableChange = (pagination, filters, sorter) => {
+    const { current, pageSize } = pagination;
+    fetchInventoryReport(current - 1, pageSize);
+    setPagination(pagination);
+  };
+
   const calculateSummary = (inventoryData) => {
     const totalValue = inventoryData.reduce((sum, item) => sum + (item.totalValue || 0), 0);
     const lowStockItems = inventoryData.filter(item => {
@@ -204,7 +213,7 @@ const InventoryValuationReport = () => {
 
     setSummaryData({
       totalValue,
-      totalItems: inventoryData.length,
+      totalItems: pagination.total,
       lowStockItems,
       outOfStockItems
     });
@@ -271,7 +280,7 @@ const InventoryValuationReport = () => {
   };
 
   useEffect(() => {
-    fetchInventoryReport();
+    fetchInventoryReport(pagination.current - 1, pagination.pageSize);
   }, []);
 
   return (
@@ -336,12 +345,15 @@ const InventoryValuationReport = () => {
           loading={loading}
           rowKey="id"
           scroll={{ x: true }}
-          pagination={{ 
-            pageSize: 10,
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50', '100'],
             showTotal: (total) => `Total ${total} items`
           }}
+          onChange={handleTableChange}
           size="small"
           locale={{
             emptyText: loading ? <Spin size="large" /> : 'No inventory data available'
