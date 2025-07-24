@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Table, Button, Statistic, Tag, message, Card, Row, Col, Spin } from 'antd';
 import { Download } from 'lucide-react';
+import { InventoryService } from '../../services/InventoryService';
 import { getAllProducts } from '../../services/productServices';
 import { getAllCategories } from '../../services/categories';
 
@@ -141,7 +142,14 @@ const InventoryValuationReport = () => {
         getAllProducts()
       ]);
 
-      const products = Array.isArray(productsResponse) ? productsResponse : [];
+      // Extract products array from response
+      const products = Array.isArray(productsResponse?.content) 
+        ? productsResponse.content 
+        : Array.isArray(productsResponse)
+          ? productsResponse
+          : [];
+
+      console.log('Products data:', products); // Debug log
 
       const processedData = products.map(product => {
         const totalValue = (product.costPrice || 0) * (product.quantityInStock || 0);
@@ -163,6 +171,8 @@ const InventoryValuationReport = () => {
           lowStockThreshold: product.lowStockThreshold || 0
         };
       });
+
+      console.log('Processed data:', processedData); // Debug log
 
       setData(processedData);
       calculateSummary(processedData);
@@ -325,8 +335,13 @@ const InventoryValuationReport = () => {
           dataSource={data} 
           loading={loading}
           rowKey="id"
-          scroll={{ x: true, y: 600 }}
-          pagination={false}
+          scroll={{ x: true }}
+          pagination={{ 
+            pageSize: 10,
+            showSizeChanger: true,
+            pageSizeOptions: ['10', '20', '50', '100'],
+            showTotal: (total) => `Total ${total} items`
+          }}
           size="small"
           locale={{
             emptyText: loading ? <Spin size="large" /> : 'No inventory data available'
