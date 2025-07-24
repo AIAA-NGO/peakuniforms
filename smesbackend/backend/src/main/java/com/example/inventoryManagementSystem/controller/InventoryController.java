@@ -4,8 +4,6 @@ import com.example.inventoryManagementSystem.dto.request.InventoryAdjustmentRequ
 import com.example.inventoryManagementSystem.dto.response.InventoryStatusResponse;
 import com.example.inventoryManagementSystem.dto.response.LowStockSuggestionResponse;
 import com.example.inventoryManagementSystem.service.InventoryService;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -22,15 +20,14 @@ public class InventoryController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<InventoryStatusResponse>> getInventoryStatus(
+    public ResponseEntity<List<InventoryStatusResponse>> getInventoryStatus(
             @RequestParam(required = false) String search,
             @RequestParam(required = false) Long categoryId,
             @RequestParam(required = false) Long brandId,
             @RequestParam(required = false) Boolean lowStockOnly,
-            @RequestParam(required = false) Boolean expiredOnly,
-            Pageable pageable) {
+            @RequestParam(required = false) Boolean expiredOnly) {
         return ResponseEntity.ok(inventoryService.getInventoryStatus(
-                search, categoryId, brandId, lowStockOnly, expiredOnly, pageable));
+                search, categoryId, brandId, lowStockOnly, expiredOnly));
     }
 
     @PostMapping("/adjust")

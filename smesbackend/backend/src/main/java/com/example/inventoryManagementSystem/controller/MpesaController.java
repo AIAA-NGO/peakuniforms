@@ -38,7 +38,7 @@ import java.util.Optional;
 public class MpesaController {
 
     private final MpesaTransactionRepository mpesaTransactionsRepository;
-    private final ObjectMapper objectMapper; 
+    private final ObjectMapper objectMapper;
 
 
     @Value("${mpesa.consumer.key}")
