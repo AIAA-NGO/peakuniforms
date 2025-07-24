@@ -15,11 +15,6 @@ const InventoryValuationReport = () => {
     lowStockItems: 0,
     outOfStockItems: 0
   });
-  const [pagination, setPagination] = useState({
-    current: 1,
-    pageSize: 10,
-    total: 0
-  });
 
   const formatCurrency = (value) => {
     return new Intl.NumberFormat('en-KE', {
@@ -139,22 +134,22 @@ const InventoryValuationReport = () => {
     return 'HIGH';
   };
 
-  const fetchInventoryReport = async (page = 0, size = 10) => {
+  const fetchInventoryReport = async () => {
     setLoading(true);
     try {
       const [categoriesData, productsResponse] = await Promise.all([
         fetchCategories(),
-        getAllProducts(page, size)
+        getAllProducts()
       ]);
 
-      // Update pagination total
-      setPagination(prev => ({
-        ...prev,
-        total: productsResponse?.totalElements || 0
-      }));
-
       // Extract products array from response
-      const products = productsResponse?.content || [];
+      const products = Array.isArray(productsResponse?.content) 
+        ? productsResponse.content 
+        : Array.isArray(productsResponse)
+          ? productsResponse
+          : [];
+
+      console.log('Products data:', products); // Debug log
 
       const processedData = products.map(product => {
         const totalValue = (product.costPrice || 0) * (product.quantityInStock || 0);
@@ -177,6 +172,8 @@ const InventoryValuationReport = () => {
         };
       });
 
+      console.log('Processed data:', processedData); // Debug log
+
       setData(processedData);
       calculateSummary(processedData);
       updateCategoryFilters(processedData);
@@ -195,12 +192,6 @@ const InventoryValuationReport = () => {
     }
   };
 
-  const handleTableChange = (pagination, filters, sorter) => {
-    const { current, pageSize } = pagination;
-    fetchInventoryReport(current - 1, pageSize);
-    setPagination(pagination);
-  };
-
   const calculateSummary = (inventoryData) => {
     const totalValue = inventoryData.reduce((sum, item) => sum + (item.totalValue || 0), 0);
     const lowStockItems = inventoryData.filter(item => {
@@ -213,7 +204,7 @@ const InventoryValuationReport = () => {
 
     setSummaryData({
       totalValue,
-      totalItems: pagination.total,
+      totalItems: inventoryData.length,
       lowStockItems,
       outOfStockItems
     });
@@ -280,7 +271,7 @@ const InventoryValuationReport = () => {
   };
 
   useEffect(() => {
-    fetchInventoryReport(pagination.current - 1, pagination.pageSize);
+    fetchInventoryReport();
   }, []);
 
   return (
@@ -345,15 +336,12 @@ const InventoryValuationReport = () => {
           loading={loading}
           rowKey="id"
           scroll={{ x: true }}
-          pagination={{
-            current: pagination.current,
-            pageSize: pagination.pageSize,
-            total: pagination.total,
+          pagination={{ 
+            pageSize: 10,
             showSizeChanger: true,
             pageSizeOptions: ['10', '20', '50', '100'],
             showTotal: (total) => `Total ${total} items`
           }}
-          onChange={handleTableChange}
           size="small"
           locale={{
             emptyText: loading ? <Spin size="large" /> : 'No inventory data available'

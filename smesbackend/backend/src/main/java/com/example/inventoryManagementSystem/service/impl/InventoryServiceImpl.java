@@ -3,7 +3,6 @@ package com.example.inventoryManagementSystem.service.impl;
 import com.example.inventoryManagementSystem.dto.request.InventoryAdjustmentRequest;
 import com.example.inventoryManagementSystem.dto.response.InventoryStatusResponse;
 import com.example.inventoryManagementSystem.dto.response.LowStockSuggestionResponse;
-import com.example.inventoryManagementSystem.dto.response.ProductResponse;
 import com.example.inventoryManagementSystem.exception.ResourceNotFoundException;
 import com.example.inventoryManagementSystem.model.*;
 import com.example.inventoryManagementSystem.repository.*;
@@ -30,12 +29,6 @@ public class InventoryServiceImpl implements InventoryService {
     private final PurchaseRepository purchaseRepository;
     private final PurchaseItemRepository purchaseItemRepository;
     private final SupplierRepository supplierRepository;
-
-    @Override
-    public Page<ProductResponse> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable)
-                .map(this::convertToProductResponse);
-    }
 
     @Override
     public Page<InventoryStatusResponse> getInventoryStatus(
@@ -88,38 +81,6 @@ public class InventoryServiceImpl implements InventoryService {
                 .filter(product -> product.getSupplier() != null)
                 .map(this::convertToLowStockSuggestion)
                 .collect(Collectors.toList());
-    }
-
-    private ProductResponse convertToProductResponse(Product product) {
-        return ProductResponse.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .description(product.getDescription())
-                .sku(product.getSku())
-                .barcode(product.getBarcode())
-                .price(product.getPrice())
-                .costPrice(product.getCostPrice())
-                .quantityInStock(product.getQuantityInStock())
-                .lowStockThreshold(product.getLowStockThreshold())
-                .categoryId(product.getCategory() != null ? product.getCategory().getId() : null)
-                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
-                .supplierId(product.getSupplier() != null ? product.getSupplier().getId() : null)
-                .supplierName(product.getSupplier() != null ? product.getSupplier().getCompanyName() : null)
-                .supplierContactPerson(product.getSupplier() != null ? product.getSupplier().getContactPerson() : null)
-                .supplierEmail(product.getSupplier() != null ? product.getSupplier().getEmail() : null)
-                .supplierPhone(product.getSupplier() != null ? product.getSupplier().getPhone() : null)
-                .supplierAddress(product.getSupplier() != null ? product.getSupplier().getAddress() : null)
-                .supplierWebsite(product.getSupplier() != null ? product.getSupplier().getWebsite() : null)
-                .brandId(product.getBrand() != null ? product.getBrand().getId() : null)
-                .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
-                .unitId(product.getUnit() != null ? product.getUnit().getId() : null)
-                .unitName(product.getUnit() != null ? product.getUnit().getName() : null)
-                .unitAbbreviation(product.getUnit() != null ? product.getUnit().getAbbreviation() : null)
-                .expiryDate(product.getExpiryDate())
-                .imageUrl(product.getImageUrl())
-                .createdAt(product.getCreatedAt())
-                .updatedAt(product.getUpdatedAt())
-                .build();
     }
 
     private void adjustProductStock(Product product, int adjustmentAmount, String reason) {
@@ -190,39 +151,40 @@ public class InventoryServiceImpl implements InventoryService {
             stockStatus = "OK";
         }
 
-        return InventoryStatusResponse.builder()
-                .id(product.getId())
-                .name(product.getName())
-                .sku(product.getSku())
-                .barcode(product.getBarcode())
-                .quantityInStock(product.getQuantityInStock())
-                .lowStockThreshold(product.getLowStockThreshold())
-                .price(BigDecimal.valueOf(product.getPrice()))
-                .costPrice(BigDecimal.valueOf(product.getCostPrice()))
-                .brandName(product.getBrand() != null ? product.getBrand().getName() : null)
-                .categoryName(product.getCategory() != null ? product.getCategory().getName() : null)
-                .unitName(product.getUnit() != null ? product.getUnit().getName() : null)
-                .stockStatus(stockStatus)
-                .expiryDate(product.getExpiryDate())
-                .isExpired(isExpired)
-                .build();
+        InventoryStatusResponse response = new InventoryStatusResponse();
+        response.setId(product.getId());
+        response.setName(product.getName());
+        response.setSku(product.getSku());
+        response.setBarcode(product.getBarcode());
+        response.setQuantityInStock(product.getQuantityInStock());
+        response.setLowStockThreshold(product.getLowStockThreshold());
+        response.setPrice(BigDecimal.valueOf(product.getPrice()));
+        response.setCostPrice(BigDecimal.valueOf(product.getCostPrice()));
+        response.setBrandName(product.getBrand() != null ? product.getBrand().getName() : null);
+        response.setCategoryName(product.getCategory() != null ? product.getCategory().getName() : null);
+        response.setUnitName(product.getUnit() != null ? product.getUnit().getName() : null);
+        response.setStockStatus(stockStatus);
+        response.setExpiryDate(product.getExpiryDate());
+        response.setIsExpired(isExpired);
+        return response;
     }
 
     private LowStockSuggestionResponse convertToLowStockSuggestion(Product product) {
         int suggestedQuantity = calculateSuggestedOrderQuantity(product);
 
-        return LowStockSuggestionResponse.builder()
-                .productId(product.getId())
-                .productName(product.getName())
-                .sku(product.getSku())
-                .currentStock(product.getQuantityInStock())
-                .lowStockThreshold(product.getLowStockThreshold())
-                .suggestedOrderQuantity(suggestedQuantity)
-                .supplierName(product.getSupplier().getCompanyName())
-                .supplierId(product.getSupplier().getId())
-                .costPrice(BigDecimal.valueOf(product.getCostPrice()))
-                .estimatedTotal(BigDecimal.valueOf(product.getCostPrice() * suggestedQuantity))
-                .build();
+        LowStockSuggestionResponse response = new LowStockSuggestionResponse();
+        response.setProductId(product.getId());
+        response.setProductName(product.getName());
+        response.setSku(product.getSku());
+        response.setCurrentStock(product.getQuantityInStock());
+        response.setLowStockThreshold(product.getLowStockThreshold());
+        response.setSuggestedOrderQuantity(suggestedQuantity);
+        response.setSupplierName(product.getSupplier().getCompanyName());
+        response.setSupplierId(product.getSupplier().getId());
+        response.setCostPrice(BigDecimal.valueOf(product.getCostPrice()));
+        response.setEstimatedTotal(BigDecimal.valueOf(product.getCostPrice() * suggestedQuantity));
+
+        return response;
     }
 
     private int calculateSuggestedOrderQuantity(Product product) {

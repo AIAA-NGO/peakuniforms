@@ -3,7 +3,6 @@ package com.example.inventoryManagementSystem.controller;
 import com.example.inventoryManagementSystem.dto.request.InventoryAdjustmentRequest;
 import com.example.inventoryManagementSystem.dto.response.InventoryStatusResponse;
 import com.example.inventoryManagementSystem.dto.response.LowStockSuggestionResponse;
-import com.example.inventoryManagementSystem.dto.response.ProductResponse;
 import com.example.inventoryManagementSystem.service.InventoryService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,11 +19,6 @@ public class InventoryController {
 
     public InventoryController(InventoryService inventoryService) {
         this.inventoryService = inventoryService;
-    }
-
-    @GetMapping("/products")
-    public ResponseEntity<Page<ProductResponse>> getAllProducts(Pageable pageable) {
-        return ResponseEntity.ok(inventoryService.getAllProducts(pageable));
     }
 
     @GetMapping
